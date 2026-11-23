@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AiPrj 문서</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><nav>
+  <a class="brand" href="index.html">AiPrj · 절세 어시스턴트</a>
+  <a href="index.html" class="active">홈</a>
+  <a href="plan.html">계획안</a>
+  <a href="design.html">설계서</a>
+</nav></header>
+<main>
+  <h1>AiPrj 문서</h1>
+  <p class="sub">개인사업자 본인용 부가세·종소세 절세 어시스턴트 (프로토타입) · 최종 갱신 2026-11-24</p>
+
+  <div class="grid">
+    <a class="card" href="plan.html" style="text-decoration:none;color:inherit">
+      <h3>📋 계획안</h3>
+      <p>목표와 범위, 지금까지의 의사결정 기록, 단계별 로드맵(F → B → A → C), 리스크와 대응.</p>
+    </a>
+    <a class="card" href="design.html" style="text-decoration:none;color:inherit">
+      <h3>🛠 설계서</h3>
+      <p>전체 아키텍처, 저장소 구조, 세금 엔진 API, F(파일 업로드) 상세 설계, B·A·C 확장 설계, 개발 규칙.</p>
+    </a>
+  </div>
+
+  <h2>한눈에 보기</h2>
+  <div class="table-wrap"><table>
+    <tr><th>항목</th><th>내용</th></tr>
+    <tr><td>사용자</td><td>개발자 본인만 사용 (일반 배포 없음)</td></tr>
+    <tr><td>대상 세목</td><td>부가가치세, 종합소득세</td></tr>
+    <tr><td>서비스 성격</td><td>본인 신고 <b>보조</b>. 최종 제출은 항상 사용자 본인</td></tr>
+    <tr><td>홈택스 로그인</td><td>사용자가 직접 수행</td></tr>
+    <tr><td>AI</td><td>Claude API (<code>claude-opus-5-5</code>), 세액 계산은 코드(tax-engine)</td></tr>
+    <tr><td>현재 단계</td><td><span class="badge b-ok">F 구현 완료</span> <span class="badge b-warn">실제 API 호출 미검증</span></td></tr>
+  </table></div>
+
+  <footer>이 문서는 저장소 <code>doc/</code> 폴더에 있습니다. 세무 자료(<code>input/</code>, <code>out/</code>)는 커밋하지 않습니다.</footer>
+</main>
+</body>
+</html>
