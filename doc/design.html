@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AiPrj 설계서</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><nav>
+  <a class="brand" href="index.html">AiPrj · 절세 어시스턴트</a>
+  <a href="index.html">홈</a>
+  <a href="plan.html">계획안</a>
+  <a href="design.html" class="active">설계서</a>
+</nav></header>
+<main>
+  <h1>설계서</h1>
+  <p class="sub">아키텍처와 모듈 설계 · 2026-11-24 기준 (F 구현 반영)</p>
+
+  <h2>1. 전체 아키텍처</h2>
+  <p>데이터를 얻는 방식(F·B·A·C)만 바뀌고, 그 뒤의 <b>마스킹 → Claude → 세금 엔진 → 리포트</b> 흐름은 모든 안에서 공유한다.</p>
+  <div class="card">
+  <svg class="diagram" viewBox="0 0 900 330" role="img" aria-label="전체 아키텍처 다이어그램">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+    <!-- 입력 소스 -->
+    <text x="20" y="22" class="small">데이터 소스 (안별)</text>
+    <rect class="box hl" x="20" y="34" width="190" height="52" rx="8"/><text x="34" y="58">F · 홈택스 엑셀/CSV/PDF</text><text x="34" y="76" class="small">구현 완료</text>
+    <rect class="box" x="20" y="96" width="190" height="52" rx="8"/><text x="34" y="120">B · CDP로 화면 DOM</text><text x="34" y="138" class="small">다음 단계</text>
+    <rect class="box" x="20" y="158" width="190" height="52" rx="8"/><text x="34" y="182">A · 확장 content script</text><text x="34" y="200" class="small">예정</text>
+    <rect class="box" x="20" y="220" width="190" height="52" rx="8"/><text x="34" y="244">C · 스크린샷</text><text x="34" y="262" class="small">예정 · 읽기 전용</text>
+    <!-- 어댑터/마스킹 -->
+    <rect class="box" x="270" y="110" width="150" height="86" rx="8"/><text x="284" y="138">입력 어댑터</text><text x="284" y="158" class="small">파일 파서 / 화면 어댑터</text><text x="284" y="178">+ PII 마스킹</text>
+    <path class="arrow" d="M210 60 C 240 60, 240 140, 268 140"/>
+    <path class="arrow" d="M210 122 L268 145"/>
+    <path class="arrow" d="M210 184 L268 160"/>
+    <path class="arrow" d="M210 246 C 240 246, 240 170, 268 170"/>
+    <!-- Claude -->
+    <rect class="box hl" x="480" y="100" width="170" height="106" rx="8"/><text x="494" y="128">Claude</text><text x="494" y="148" class="small">claude-opus-5-5</text><text x="494" y="166" class="small">Tool Runner · effort high</text><text x="494" y="184" class="small">절세 포인트 판단</text>
+    <path class="arrow" d="M420 153 L478 153"/>
+    <!-- 세금 엔진 -->
+    <rect class="box" x="480" y="250" width="170" height="60" rx="8"/><text x="494" y="276">tax-engine</text><text x="494" y="294" class="small">세액 계산은 코드로</text>
+    <path class="arrow" d="M545 206 L545 248"/>
+    <path class="arrow" d="M585 248 L585 208"/>
+    <text x="596" y="232" class="small">tool 호출 / 결과</text>
+    <!-- 출력 -->
+    <rect class="box" x="710" y="100" width="170" height="106" rx="8"/><text x="724" y="128">절세 리포트</text><text x="724" y="148" class="small">submit_report (zod 검증)</text><text x="724" y="166" class="small">out/report-*.md / .json</text><text x="724" y="184" class="small">A: Side Panel 표시</text>
+    <path class="arrow" d="M650 153 L708 153"/>
+    <!-- 사용자 -->
+    <rect class="box ext" x="710" y="250" width="170" height="60" rx="8"/><text x="724" y="276">나 (사용자)</text><text x="724" y="294" class="small">확인 후 홈택스에서 직접 제출</text>
+    <path class="arrow" d="M795 206 L795 248"/>
+  </svg>
+  </div>
+
+  <h2>2. 저장소 구조</h2>
+<pre><code>AiPrj/
+├─ packages/
+│  └─ tax-engine/          세액 계산 (순수 함수, 테스트 8개)
+│     └─ src/ rates.ts · incomeTax.ts · vat.ts · engine.test.ts
+├─ apps/
+│  └─ f-upload/            F안: 파일 업로드 분석 CLI
+│     └─ src/ index.ts · files.ts · mask.ts · assistant.ts · report.ts · mask.test.ts
+│  (예정) b-cdp/           B안: CDP 연결 로컬 에이전트
+│  (예정) extension/       A안: Chrome Side Panel 확장
+│  (예정) packages/hometax-adapter/   B·A 공용 화면 어댑터
+├─ doc/                    이 문서
+├─ .claude/                대화 로그 hook (conv-log.cjs)
+├─ input/  out/            세무 자료·결과 (gitignore)
+└─ ConvLogAi.md            대화 기록 (hook이 자동 커밋)</code></pre>
+  <div class="table-wrap"><table>
+    <tr><th>항목</th><th>선택</th></tr>
+    <tr><td>언어/런타임</td><td>TypeScript, Node.js 26, <code>tsx</code>로 실행 (빌드 없음)</td></tr>
+    <tr><td>패키지 관리</td><td>npm workspaces (<code>packages/*</code>, <code>apps/*</code>)</td></tr>
+    <tr><td>AI SDK</td><td><code>@anthropic-ai/sdk</code> 1.12, <code>zod</code> 4</td></tr>
+    <tr><td>엑셀 파싱</td><td>SheetJS <code>xlsx</code> 0.20.3 (공식 CDN 배포본). xls·xlsx·HTML 테이블 지원</td></tr>
+    <tr><td>테스트</td><td><code>node:test</code> (<code>npm test</code>), 타입 검사 <code>npm run typecheck</code></td></tr>
+  </table></div>
+
+  <h2>3. 세금 엔진 (packages/tax-engine)</h2>
+  <p>LLM은 세액을 직접 계산하지 않는다. 아래 함수만 도구로 호출한다. 세율은 <code>rates.ts</code>에 데이터로 분리되어 있다.</p>
+  <div class="table-wrap"><table>
+    <tr><th>함수</th><th>입력</th><th>출력 / 규칙</th></tr>
+    <tr><td><code>calcIncomeTax</code></td><td>과세표준, 귀속연도</td><td>산출세액, 지방소득세(10%), 한계세율. 기본세율 8단계(6~45%)와 누진공제 적용. 검증 연도(2025) 이후면 경고</td></tr>
+    <tr><td><code>compareIncomeTax</code></td><td>전/후 과세표준</td><td>절세액(종소세+지방소득세 차이). 공제 추가 전후, 장부 vs 추계 비교용</td></tr>
+    <tr><td><code>calcGeneralVat</code></td><td>과세매출 공급가액, 공제 매입세액, 카드매출 발행액 등</td><td>매출세액 10% − 매입세액 − 카드발행공제(1.3%, 연 1,000만, 납부세액 한도) − 기타공제. 음수면 환급</td></tr>
+    <tr><td><code>calcSimplifiedVat</code></td><td>공급대가, 업종별 부가가치율, 매입 공급대가</td><td>공급대가 × 부가가치율 × 10% − 매입 0.5% − 카드공제. 4,800만 미만이면 납부면제. 환급 없음</td></tr>
+  </table></div>
+  <div class="callout">세율표는 2025 귀속까지 확인된 값이다. 카드발행세액공제는 공제율과 적용 기한이 일몰 연장 여부에 따라 바뀔 수 있으므로, 신고 전에 국세청 고시로 확인한다.</div>
+
+  <h2>4. F안 상세: 파일 업로드 분석</h2>
+  <h3>처리 흐름</h3>
+  <div class="steps">
+    <div class="card"><b>파일 로드</b> (<code>files.ts</code>): xls/xlsx/HTML은 SheetJS로 시트별 CSV로 바꾼다. CSV는 UTF-8을 시도하고 실패하면 EUC-KR로 읽는다. PDF와 이미지는 base64 블록으로 넣는다. 파일당 30MB 제한.</div>
+    <div class="card"><b>마스킹</b> (<code>mask.ts</code>): 텍스트 자료에서 주민·외국인번호, 카드번호, 계좌·사업자·전화번호 형태를 마스킹한다. PDF와 이미지는 마스킹하지 못하므로 경고를 표시한다.</div>
+    <div class="card"><b>분석</b> (<code>assistant.ts</code>): Tool Runner가 Claude와 도구 호출을 반복한다(최대 20회). Claude가 계산 도구로 세액을 얻고, 마지막에 <code>submit_report</code>를 호출한다.</div>
+    <div class="card"><b>리포트</b> (<code>report.ts</code>): 확신도와 절세액 순으로 정렬한 Markdown과 JSON을 <code>out/</code>에 저장한다.</div>
+  </div>
+
+  <h3>Claude 호출 설정</h3>
+  <div class="table-wrap"><table>
+    <tr><th>설정</th><th>값</th><th>이유</th></tr>
+    <tr><td>모델</td><td><code>claude-opus-5-5</code></td><td>세법 해석과 다단계 판단 품질</td></tr>
+    <tr><td>effort</td><td><code>high</code></td><td>이 모델의 기본값(medium)보다 깊게 판단</td></tr>
+    <tr><td>thinking</td><td>생략 (adaptive 자동)</td><td>이 모델은 thinking을 끌 수 없음</td></tr>
+    <tr><td>fallbacks</td><td><code>"default"</code></td><td>안전 분류기 오탐 시 서버에서 다른 모델로 자동 재시도</td></tr>
+    <tr><td>max_tokens / iterations</td><td>16,000 / 20</td><td>도구 루프 상한</td></tr>
+    <tr><td>최종 출력</td><td><code>submit_report</code> 도구 (zod 스키마)</td><td>이 모델은 강제 tool_choice를 지원하지 않으므로, 프롬프트로 유도하고 스키마로 검증</td></tr>
+  </table></div>
+
+  <h3>도구 목록</h3>
+  <div class="table-wrap"><table>
+    <tr><th>도구</th><th>역할</th></tr>
+    <tr><td><code>calc_income_tax</code></td><td>과세표준으로 종소세와 지방소득세 계산</td></tr>
+    <tr><td><code>compare_income_tax</code></td><td>두 시나리오의 절세액</td></tr>
+    <tr><td><code>calc_general_vat</code></td><td>일반과세자 납부(환급)세액</td></tr>
+    <tr><td><code>calc_simplified_vat</code></td><td>간이과세자 납부세액</td></tr>
+    <tr><td><code>submit_report</code></td><td>최종 리포트 제출 (한 번만)</td></tr>
+  </table></div>
+
+  <h3>절세 카드 스키마 (Report.cards[])</h3>
+  <div class="table-wrap"><table>
+    <tr><th>필드</th><th>타입</th><th>설명</th></tr>
+    <tr><td><code>tax</code></td><td>부가세 | 종소세 | 공통</td><td>세목</td></tr>
+    <tr><td><code>title</code>, <code>detail</code></td><td>string</td><td>무엇을 왜 해야 하는지</td></tr>
+    <tr><td><code>estimated_saving_won</code></td><td>number | null</td><td>도구로 산출한 금액만. 계산 불가면 null</td></tr>
+    <tr><td><code>calculation</code></td><td>string</td><td>어떤 도구에 어떤 값을 넣었는지</td></tr>
+    <tr><td><code>legal_basis</code></td><td>string</td><td>법조문이나 국세청 안내</td></tr>
+    <tr><td><code>hometax_location</code></td><td>string</td><td>홈택스 메뉴 경로</td></tr>
+    <tr><td><code>confidence</code></td><td>높음 | 중간 | 낮음</td><td>확신도</td></tr>
+    <tr><td><code>user_must_confirm</code></td><td>string[]</td><td>내가 사실 확인해야 할 것 (리포트에 체크박스로 표시)</td></tr>
+  </table></div>
+  <p>리포트 최상위에는 <code>summary</code>, <code>taxpayer_profile</code>, <code>data_limitations</code>, <code>more_documents_needed</code>가 함께 들어간다.</p>
+
+  <h3>실행</h3>
+<pre><code>$env:ANTHROPIC_API_KEY = "sk-ant-..."
+npm run f -- --dry-run input/                       # 전송 내용·마스킹 확인 (무료)
+npm run f -- --year 2025 --note "일반과세자, 온라인 소매" input/</code></pre>
+
+  <h2>5. 확장 설계 (B · A · C)</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>B · CDP 로컬 에이전트</h3>
+      <ul>
+        <li>Chrome을 <code>--remote-debugging-port</code>로 띄워 직접 로그인</li>
+        <li>Playwright <code>connectOverCDP</code>로 현재 탭에 연결</li>
+        <li>도구: <code>read_page</code>(어댑터 JSON), 계산 도구, <code>highlight_field</code></li>
+        <li>WebSquare iframe 대응: 모든 프레임 순회</li>
+        <li>터미널에서 대화형 질의응답</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>A · Chrome Side Panel</h3>
+      <ul>
+        <li>Manifest V3, <code>side_panel</code> 사용, content script는 <code>all_frames</code>로 주입</li>
+        <li>B의 화면 어댑터 재사용 (<code>packages/hometax-adapter</code>)</li>
+        <li>API 키는 확장에 두지 않고 로컬 프록시(localhost)에서 호출</li>
+        <li><code>suggest_input</code>은 내가 승인한 뒤에만 값을 입력</li>
+        <li>압축 해제 확장으로 로드, 스토어 배포 없음</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>C · Computer use</h3>
+      <ul>
+        <li><code>computer_toolset_20260801</code> (Opus 5.5 기준)</li>
+        <li>스크린샷 읽기만 허용, 클릭·입력 액션은 차단</li>
+        <li>어댑터가 없는 화면의 보조 판독용</li>
+        <li>느리고 비싸므로 필요한 화면에만 사용</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>6. 안전장치와 개발 규칙</h2>
+  <div class="table-wrap"><table>
+    <tr><th>구분</th><th>규칙</th></tr>
+    <tr><td>제출</td><td>어떤 안도 신고 제출 버튼을 누르지 않는다. 최종 제출은 사용자가 한다</td></tr>
+    <tr><td>입력</td><td>홈택스 화면에 값을 넣는 동작(A·B)은 사용자가 승인한 뒤에만 실행한다</td></tr>
+    <tr><td>계산</td><td>세액과 절세액은 tax-engine 결과만 쓴다. LLM은 암산하지 않는다</td></tr>
+    <tr><td>개인정보</td><td>텍스트는 마스킹한 뒤 전송한다. 원본 전송(PDF·이미지)은 경고한다</td></tr>
+    <tr><td>저장소</td><td><code>input/</code>, <code>out/</code>, <code>.env</code>, 엑셀·PDF는 gitignore. 비밀값은 커밋 금지</td></tr>
+    <tr><td>대화 로그</td><td><code>.claude/hooks/conv-log.cjs</code>가 매 응답마다 <code>ConvLogAi.md</code>를 커밋하고 push한다. <b>프롬프트에 실제 세무자료나 키를 붙여넣지 말 것</b></td></tr>
+    <tr><td>테스트</td><td>세율이나 계산 로직을 바꾸면 <code>engine.test.ts</code>에 케이스를 추가한다. <code>npm test</code>, <code>npm run typecheck</code> 통과 필수</td></tr>
+  </table></div>
+
+  <footer>배경과 로드맵은 <a href="plan.html">계획안</a> 참고.</footer>
+</main>
+</body>
+</html>

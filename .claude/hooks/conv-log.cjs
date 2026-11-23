@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Claude Code hook: 대화 내용을 ConvLogAi.md에 기록하고 git push, 작업 완료 시 OS 알림.
-//   node conv-log.js prompt  -> UserPromptSubmit: 사용자 프롬프트 기록
-//   node conv-log.js stop    -> Stop: Claude 응답 기록 + commit/push + 알림
+//   node conv-log.cjs prompt  -> UserPromptSubmit: 사용자 프롬프트 기록
+//   node conv-log.cjs stop    -> Stop: Claude 응답 기록 + commit/push + 알림
 const fs = require('fs');
 const path = require('path');
 const { execFileSync, spawn } = require('child_process');

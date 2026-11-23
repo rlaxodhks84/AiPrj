@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AiPrj 계획안</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><nav>
+  <a class="brand" href="index.html">AiPrj · 절세 어시스턴트</a>
+  <a href="index.html">홈</a>
+  <a href="plan.html" class="active">계획안</a>
+  <a href="design.html">설계서</a>
+</nav></header>
+<main>
+  <h1>계획안</h1>
+  <p class="sub">무엇을, 왜, 어떤 순서로 만드는가 · 2026-11-24 기준</p>
+
+  <h2>1. 목표</h2>
+  <div class="card">
+    <p style="margin:0">홈택스에 <b>내가 직접 로그인</b>한 뒤, 홈택스 자료와 화면을 바탕으로 <b>Claude가 부가세·종소세 절세 포인트를 찾아주는</b> 개인용 어시스턴트를 만든다.
+    어시스턴트는 근거와 예상 절세액, 홈택스 입력 위치를 알려주고, 신고서 제출은 내가 직접 한다.</p>
+  </div>
+
+  <h2>2. 범위</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>포함</h3>
+      <ul>
+        <li>개인사업자 본인 (일반·간이과세자)</li>
+        <li>부가가치세: 매입세액 공제 누락, 불공제 오분류, 의제매입, 카드매출 세액공제, 간이/일반 유불리</li>
+        <li>종합소득세: 장부 vs 추계 비교, 노란우산·연금저축·IRP, 중소기업 특별세액감면, 창업 감면, 인적공제, 기납부세액</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>제외</h3>
+      <ul>
+        <li>타인 대리 신고 (세무사법 이슈)</li>
+        <li>신고서 자동 제출</li>
+        <li>일반 사용자 배포, 회원 관리</li>
+        <li>법인세, 원천세 (추후 검토)</li>
+        <li>공동인증서 보관</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>3. 의사결정 기록</h2>
+  <ul class="timeline">
+    <li><span class="date">2026-11-22</span><br><span class="what">저장소 대화를 <code>ConvLogAi.md</code>에 자동 기록·push, 작업 완료 알림 hook 도입</span></li>
+    <li><span class="date">2026-11-22</span><br><span class="what">세무 프로그램 구현 방식 검토: Chrome 확장, 데스크톱 앱, RPA, 스크래핑 API, 전자신고 파일, 웹 SaaS</span></li>
+    <li><span class="date">2026-11-22</span><br><span class="what">대상 = 개인사업자 본인, 범위 = 부가세·종소세</span></li>
+    <li class="old"><span class="date">2026-11-22</span><br><span class="what">인증서 서버 보관 검토</span> → 보안·법적 부담으로 철회</li>
+    <li><span class="date">2026-11-22</span><br><span class="what">서비스 성격 = <b>본인 신고 보조</b></span></li>
+    <li class="old"><span class="date">2026-11-22</span><br><span class="what">스크래핑 API 업체 + 간편인증 기반 웹 서비스 (Next.js + NestJS 모노레포)</span> → 프로토타입 방향 전환으로 보류</li>
+    <li><span class="date">2026-11-24</span><br><span class="what"><b>방향 전환:</b> 로그인은 직접, 이후 Claude가 홈택스 화면·자료 위에서 절세를 돕는 어시스턴트</span></li>
+    <li><span class="date">2026-11-24</span><br><span class="what">일반 배포 없음, 나만 사용. A·B·C·F안을 <b>신뢰도 순서(F → B → A → C)</b>로 하나씩 구현</span></li>
+    <li><span class="date">2026-11-24</span><br><span class="what">언어 = TypeScript (npm workspaces), F안 구현 완료</span></li>
+  </ul>
+
+  <h2>4. 로드맵</h2>
+  <p>신뢰도는 <b>데이터를 어디서 얻느냐</b>로 정했다. 공식 파일 &gt; 화면 DOM &gt; 스크린샷 순이다.</p>
+  <div class="steps">
+    <div class="card">
+      <h3>F. 파일 업로드 분석 <span class="badge b-ok">구현 완료</span> <span class="badge b-warn">API 실호출 미검증</span></h3>
+      홈택스에서 내려받은 엑셀·CSV·PDF를 분석해 절세 리포트를 만든다. 화면 자동화가 없어 가장 견고하다.<br>
+      <b>남은 일:</b> 실제 홈택스 자료로 실행, 리포트 품질 점검, 세율표 최신 고시 확인.
+    </div>
+    <div class="card">
+      <h3>B. 로컬 에이전트 + CDP 연결 <span class="badge b-muted">다음</span></h3>
+      내가 로그인한 Chrome에 Playwright(<code>connectOverCDP</code>)로 붙어 현재 홈택스 화면을 읽는다. 터미널에서 대화한다.<br>
+      <b>핵심 산출물:</b> 홈택스 메뉴별 화면 어댑터(DOM → JSON). A에서 그대로 재사용한다.
+    </div>
+    <div class="card">
+      <h3>A. Chrome 확장 Side Panel <span class="badge b-muted">예정</span></h3>
+      홈택스 옆에 채팅 패널을 띄운다. 입력할 위치를 강조하고, 입력값은 내가 승인한 뒤에만 넣는다.<br>
+      혼자 쓰므로 압축 해제 확장으로 로드하고, 스토어에는 배포하지 않는다.
+    </div>
+    <div class="card">
+      <h3>C. Computer use (스크린샷 기반) <span class="badge b-muted">예정</span></h3>
+      DOM 파싱이 안 되는 화면을 보완하는 용도로 쓴다. <b>읽기 전용</b>으로만 사용하고 클릭 권한은 주지 않는다.
+    </div>
+  </div>
+
+  <h2>5. 리스크와 대응</h2>
+  <div class="table-wrap"><table>
+    <tr><th>리스크</th><th>영향</th><th>대응</th></tr>
+    <tr><td>세무사법 (대리 신고)</td><td><span class="badge b-bad">높음</span></td><td>본인용·본인 신고 보조로 한정. 제출은 직접 한다. 배포 전환 시 세무사·변호사 자문</td></tr>
+    <tr><td>세율·공제 요건 변경</td><td><span class="badge b-warn">중간</span></td><td><code>rates.ts</code>에 데이터로 분리. 검증 연도 이후 계산은 경고를 표시하고, 신고 전 국세청 고시로 확인</td></tr>
+    <tr><td>LLM 계산 오류·환각</td><td><span class="badge b-warn">중간</span></td><td>세액은 tax-engine 코드만 계산. 카드마다 확신도와 직접 확인할 항목 표시</td></tr>
+    <tr><td>개인정보가 API로 전송됨</td><td><span class="badge b-warn">중간</span></td><td>텍스트는 마스킹 후 전송. PDF·이미지는 원본 전송 경고. 엑셀 우선 사용</td></tr>
+    <tr><td>세무 자료가 git에 올라감</td><td><span class="badge b-bad">높음</span></td><td><code>.gitignore</code>에 <code>input/ out/ *.xls *.xlsx *.pdf</code> 등록. 대화 로그 hook이 있으므로 프롬프트에 실제 개인정보 붙여넣기 금지</td></tr>
+    <tr><td>홈택스 화면 변경 (B·A·C)</td><td><span class="badge b-warn">중간</span></td><td>메뉴별 어댑터로 격리. 깨지면 F(파일)로 대체</td></tr>
+    <tr><td>API 비용</td><td><span class="badge b-info">낮음</span></td><td>dry-run으로 전송 내용 먼저 확인. 반복 분석 시 프롬프트 캐싱 검토</td></tr>
+  </table></div>
+
+  <h2>6. 다음 할 일</h2>
+  <div class="card">
+    <ul style="margin:0">
+      <li><input type="checkbox" disabled> <code>ANTHROPIC_API_KEY</code> 설정 후 실제 홈택스 자료로 F 실행</li>
+      <li><input type="checkbox" disabled> 리포트 결과 검토 → 시스템 프롬프트와 절세 체크리스트 보완</li>
+      <li><input type="checkbox" disabled> 세율표(<code>packages/tax-engine/src/rates.ts</code>) 2026 귀속 기준 확인</li>
+      <li><input type="checkbox" disabled> B안 착수: 부가세 신고 화면, 매입 조회 화면 어댑터부터</li>
+    </ul>
+  </div>
+
+  <footer>설계 상세는 <a href="design.html">설계서</a> 참고.</footer>
+</main>
+</body>
+</html>
